@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CliCoreKit.Sample": {
+      "commandName": "Project",
+      "commandLineArgs": "greet bob"
+    }
+  }
+}
