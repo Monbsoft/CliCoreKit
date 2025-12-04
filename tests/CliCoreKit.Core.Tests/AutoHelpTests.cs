@@ -27,19 +27,21 @@ public class AutoHelpTests
         registry.Register(definition);
 
         var app = new CliApplication(registry);
-        var output = new StringWriter();
-        Console.SetOut(output);
+        using (var output = new StringWriter())
+        {
+            Console.SetOut(output);
 
-        // Act
-        var exitCode = await app.RunAsync(new[] { "test", "--help" });
+            // Act
+            var exitCode = await app.RunAsync(new[] { "test", "--help" });
 
-        // Assert
-        exitCode.Should().Be(0);
-        var help = output.ToString();
-        help.Should().Contain("Usage:");
-        help.Should().Contain("test");
-        help.Should().Contain("Test command");
-        help.Should().Contain("-n, --name");
+            // Assert
+            exitCode.Should().Be(0);
+            var help = output.ToString();
+            help.Should().Contain("Usage:");
+            help.Should().Contain("test");
+            help.Should().Contain("Test command");
+            help.Should().Contain("-n, --name");
+        }
     }
 
     [Fact]
@@ -54,16 +56,18 @@ public class AutoHelpTests
         });
 
         var app = new CliApplication(registry);
-        var output = new StringWriter();
-        Console.SetOut(output);
+        using (var output = new StringWriter())
+        {
+            Console.SetOut(output);
 
-        // Act
-        var exitCode = await app.RunAsync(new[] { "test", "-h" });
+            // Act
+            var exitCode = await app.RunAsync(new[] { "test", "-h" });
 
-        // Assert
-        exitCode.Should().Be(0);
-        var help = output.ToString();
-        help.Should().Contain("Usage:");
+            // Assert
+            exitCode.Should().Be(0);
+            var help = output.ToString();
+            help.Should().Contain("Usage:");
+        }
     }
 
     [Fact]
@@ -80,17 +84,19 @@ public class AutoHelpTests
         registry.Register(definition);
 
         var app = new CliApplication(registry);
-        var output = new StringWriter();
-        Console.SetOut(output);
+        using (var output = new StringWriter())
+        {
+            Console.SetOut(output);
 
-        // Act
-        var exitCode = await app.RunAsync(new[] { "custom", "--help" });
+            // Act
+            var exitCode = await app.RunAsync(new[] { "custom", "--help" });
 
-        // Assert
-        exitCode.Should().Be(0);
-        var help = output.ToString();
-        help.Should().Contain("CUSTOM HELP");
-        help.Should().NotContain("Usage:"); // Should not show automatic help
+            // Assert
+            exitCode.Should().Be(0);
+            var help = output.ToString();
+            help.Should().Contain("CUSTOM HELP");
+            help.Should().NotContain("Usage:"); // Should not show automatic help
+        }
     }
 
     [Fact]
@@ -114,19 +120,21 @@ public class AutoHelpTests
         registry.Register(definition);
 
         var app = new CliApplication(registry);
-        var output = new StringWriter();
-        Console.SetOut(output);
+        using (var output = new StringWriter())
+        {
+            Console.SetOut(output);
 
-        // Act
-        var exitCode = await app.RunAsync(new[] { "deploy", "--help" });
+            // Act
+            var exitCode = await app.RunAsync(new[] { "deploy", "--help" });
 
-        // Assert
-        exitCode.Should().Be(0);
-        var help = output.ToString();
-        help.Should().Contain("Arguments:");
-        help.Should().Contain("environment");
-        help.Should().Contain("Target environment");
-        help.Should().Contain("(required)");
+            // Assert
+            exitCode.Should().Be(0);
+            var help = output.ToString();
+            help.Should().Contain("Arguments:");
+            help.Should().Contain("environment");
+            help.Should().Contain("Target environment");
+            help.Should().Contain("(required)");
+        }
     }
 
     [Fact]
@@ -150,17 +158,19 @@ public class AutoHelpTests
         registry.Register(definition);
 
         var app = new CliApplication(registry);
-        var output = new StringWriter();
-        Console.SetOut(output);
+        using (var output = new StringWriter())
+        {
+            Console.SetOut(output);
 
-        // Act
-        var exitCode = await app.RunAsync(new[] { "serve", "--help" });
+            // Act
+            var exitCode = await app.RunAsync(new[] { "serve", "--help" });
 
-        // Assert
-        exitCode.Should().Be(0);
-        var help = output.ToString();
-        help.Should().Contain("<int>");
-        help.Should().Contain("(default: 8080)");
+            // Assert
+            exitCode.Should().Be(0);
+            var help = output.ToString();
+            help.Should().Contain("<int>");
+            help.Should().Contain("(default: 8080)");
+        }
     }
 
     [Fact]
@@ -190,18 +200,20 @@ public class AutoHelpTests
         });
 
         var app = new CliApplication(registry);
-        var output = new StringWriter();
-        Console.SetOut(output);
+        using (var output = new StringWriter())
+        {
+            Console.SetOut(output);
 
-        // Act
-        var exitCode = await app.RunAsync(new[] { "git", "--help" });
+            // Act
+            var exitCode = await app.RunAsync(new[] { "git", "--help" });
 
-        // Assert
-        exitCode.Should().Be(0);
-        var help = output.ToString();
-        help.Should().Contain("Commands:");
-        help.Should().Contain("commit");
-        help.Should().Contain("push");
+            // Assert
+            exitCode.Should().Be(0);
+            var help = output.ToString();
+            help.Should().Contain("Commands:");
+            help.Should().Contain("commit");
+            help.Should().Contain("push");
+        }
     }
 
     [Fact]
@@ -216,16 +228,18 @@ public class AutoHelpTests
         });
 
         var app = new CliApplication(registry);
-        var output = new StringWriter();
-        Console.SetOut(output);
+        using (var output = new StringWriter())
+        {
+            Console.SetOut(output);
 
-        // Act
-        var exitCode = await app.RunAsync(new[] { "test" });
+            // Act
+            var exitCode = await app.RunAsync(new[] { "test" });
 
-        // Assert
-        exitCode.Should().Be(0);
-        var result = output.ToString();
-        result.Should().Contain("Command executed");
+            // Assert
+            exitCode.Should().Be(0);
+            var result = output.ToString();
+            result.Should().Contain("Command executed");
+        }
     }
 
     private class TestCommand : ICommand
