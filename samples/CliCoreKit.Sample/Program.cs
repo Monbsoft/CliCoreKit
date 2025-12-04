@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
 using Monbsoft.CliCoreKit.Core;
 using Monbsoft.CliCoreKit.Hosting;
 
@@ -6,24 +6,41 @@ var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureCli(cli =>
 {
+    // Simple command with typed arguments and options
     cli.AddCommand<GreetCommand>("greet", "Greets a person")
-       .AddCommand<AddCommand>("add", "Adds two numbers")
-       .AddCommand<ListCommand>("list", "List operations")
-       .AddSubCommand<ListFilesCommand>("file", "list", "Lists files")       
-       .UseValidation();  
+       .AddArgument<string>("name", "The name to greet", defaultValue: "World")
+       .AddOption<string>("greeting", 'g', "Custom greeting message", defaultValue: "Hello")
+       .AddOption<bool>("formal", 'f', "Use a formal greeting")
+       .AddOption<int>("repeat", 'r', "Number of times to repeat", defaultValue: 1);
+    
+    // Command with required arguments
+    cli.AddCommand<AddCommand>("add", "Adds two numbers")
+       .AddArgument<int>("number1", "The first number", required: true)
+       .AddArgument<int>("number2", "The second number", required: true)
+       .AddOption<bool>("verbose", 'v', "Show detailed output");
+    
+    // Hierarchical commands
+    cli.AddCommand<ListCommand>("list", "List operations")
+       .AddCommand<ListFilesCommand>("files", "Lists files in a directory")
+           .AddOption<string>("path", 'p', "Directory path", defaultValue: ".")
+           .AddOption<string>("pattern", 't', "File pattern", defaultValue: "*.*")
+           .AddOption<bool>("invert", 'i', "Invert sort order")
+           .AddOption<bool>("recursive", 'r', "Search recursively");
+    
+    cli.UseValidation();
 });
 
 var host = builder.Build();
 var exitCode = await host.RunCliAsync(args);
 return exitCode;
 
-// Commands
+// Commands implementation
 
 public class ListCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        Console.WriteLine("Please specify a subcommand. Use 'list --help' for available subcommands.");
+        Console.WriteLine("Please specify a command. Use 'list --help' for available commands.");
         return Task.FromResult(1);
     }
 }
@@ -32,29 +49,18 @@ public class GreetCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        if (context.Arguments.HasOption("help") || context.Arguments.HasOption("h"))
+        var name = context.Arguments.GetArgument<string>(0, "World");
+        var greeting = context.Arguments.GetOption<string>("greeting", "Hello");
+        var formal = context.Arguments.GetOption<bool>("formal");
+        var repeat = context.Arguments.GetOption<int>("repeat", 1);
+
+        var message = formal ? $"Good day, {name}!" : $"{greeting}, {name}!";
+
+        for (int i = 0; i < repeat; i++)
         {
-            Console.WriteLine("Usage: greet [options] [name]");
-            Console.WriteLine();
-            Console.WriteLine("Greets a person.");
-            Console.WriteLine();
-            Console.WriteLine("Arguments:");
-            Console.WriteLine("  name              The name to greet (default: World)");
-            Console.WriteLine();
-            Console.WriteLine("Options:");
-            Console.WriteLine("  --name <name>     The name to greet");
-            Console.WriteLine("  --formal          Use a formal greeting");
-            Console.WriteLine("  -h, --help        Show this help message");
-            return Task.FromResult(0);
+            Console.WriteLine(message);
         }
 
-        var name = context.Arguments.GetOptionValue("name")
-                   ?? context.Arguments.GetPositional(0)
-                   ?? "World";
-
-        var greeting = context.Arguments.HasOption("formal") ? "Good day" : "Hello";
-
-        Console.WriteLine($"{greeting}, {name}!");
         return Task.FromResult(0);
     }
 }
@@ -63,36 +69,30 @@ public class AddCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        if (context.Arguments.HasOption("help") || context.Arguments.HasOption("h"))
-        {
-            Console.WriteLine("Usage: add <number1> <number2>");
-            Console.WriteLine();
-            Console.WriteLine("Adds two numbers together.");
-            Console.WriteLine();
-            Console.WriteLine("Arguments:");
-            Console.WriteLine("  number1           The first number");
-            Console.WriteLine("  number2           The second number");
-            Console.WriteLine();
-            Console.WriteLine("Options:");
-            Console.WriteLine("  -h, --help        Show this help message");
-            return Task.FromResult(0);
-        }
+        var a = context.Arguments.GetArgument<int>(0);
+        var b = context.Arguments.GetArgument<int>(1);
+        var verbose = context.Arguments.GetOption<bool>("verbose");
 
-        if (context.Arguments.Positional.Count < 2)
+        if (a == 0 && b == 0 && context.Arguments.Positional.Count < 2)
         {
-            Console.Error.WriteLine("Usage: add <number1> <number2>");
+            Console.Error.WriteLine("Error: Two numbers are required.");
+            Console.Error.WriteLine("Use 'add --help' for usage information.");
             return Task.FromResult(1);
         }
 
-        if (int.TryParse(context.Arguments.GetPositional(0), out var a) &&
-            int.TryParse(context.Arguments.GetPositional(1), out var b))
+        var result = a + b;
+
+        if (verbose)
         {
-            Console.WriteLine($"{a} + {b} = {a + b}");
-            return Task.FromResult(0);
+            Console.WriteLine($"Adding {a} and {b}...");
+            Console.WriteLine($"Result: {result}");
+        }
+        else
+        {
+            Console.WriteLine(result);
         }
 
-        Console.Error.WriteLine("Invalid numbers provided");
-        return Task.FromResult(1);
+        return Task.FromResult(0);
     }
 }
 
@@ -100,30 +100,25 @@ public class ListFilesCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        if (context.Arguments.HasOption("help") || context.Arguments.HasOption("h"))
-        {
-            Console.WriteLine("Usage: list file [options]");
-            Console.WriteLine();
-            Console.WriteLine("Lists files in a directory.");
-            Console.WriteLine();
-            Console.WriteLine("Options:");
-            Console.WriteLine("  --path <path>     The directory path (default: current directory)");
-            Console.WriteLine("  --pattern <pat>   File pattern to match (default: *.*)");
-            Console.WriteLine("  -h, --help        Show this help message");
-            return Task.FromResult(0);
-        }
-
-        var path = context.Arguments.GetOptionValue("path") ?? ".";
-        var pattern = context.Arguments.GetOptionValue("pattern") ?? "*.*";
+        var path = context.Arguments.GetOption<string>("path", ".")!;
+        var pattern = context.Arguments.GetOption<string>("pattern", "*.*")!;
+        var invert = context.Arguments.GetOption<bool>("invert");
+        var recursive = context.Arguments.GetOption<bool>("recursive");
 
         try
         {
-            var files = Directory.GetFiles(path, pattern);
+            var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            var files = Directory.GetFiles(path, pattern, searchOption);
+            
+            var sortedFiles = invert 
+                ? files.OrderByDescending(f => Path.GetFileName(f))
+                : files.OrderBy(f => Path.GetFileName(f));
 
-            Console.WriteLine($"Files in '{path}' matching '{pattern}':");
-            foreach (var file in files)
+            Console.WriteLine($"Files in '{path}' matching '{pattern}'{(invert ? " (inverted)" : "")}{(recursive ? " (recursive)" : "")}:");
+            foreach (var file in sortedFiles)
             {
-                Console.WriteLine($"  - {Path.GetFileName(file)}");
+                var relativePath = Path.GetRelativePath(path, file);
+                Console.WriteLine($"  - {relativePath}");
             }
 
             Console.WriteLine($"\nTotal: {files.Length} file(s)");
@@ -136,3 +131,4 @@ public class ListFilesCommand : ICommand
         }
     }
 }
+

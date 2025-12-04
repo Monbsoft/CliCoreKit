@@ -90,12 +90,148 @@ public sealed class ParsedArguments
 
         try
         {
-            value = (T)Convert.ChangeType(stringValue, typeof(T));
+            value = ConvertValue<T>(stringValue);
             return true;
         }
         catch
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Gets an option value as a specific type with a default value.
+    /// </summary>
+    public T GetOption<T>(string name, T defaultValue = default!)
+    {
+        // Special handling for bool - if option exists without value, it's true
+        if (typeof(T) == typeof(bool))
+        {
+            if (HasOption(name))
+            {
+                var stringValue = GetOptionValue(name);
+                if (string.IsNullOrEmpty(stringValue))
+                {
+                    return (T)(object)true; // Flag option present = true
+                }
+                try
+                {
+                    return (T)(object)ConvertValue<bool>(stringValue);
+                }
+                catch
+                {
+                    return defaultValue;
+                }
+            }
+            return defaultValue;
+        }
+
+        if (TryGetValue<T>(name, out var value))
+        {
+            return value!;
+        }
+
+        return defaultValue;
+    }
+
+    /// <summary>
+    /// Gets a positional argument as a specific type.
+    /// </summary>
+    public T? GetArgument<T>(int index, T? defaultValue = default)
+    {
+        var stringValue = GetPositional(index);
+        
+        if (stringValue == null)
+        {
+            return defaultValue;
+        }
+
+        try
+        {
+            return ConvertValue<T>(stringValue);
+        }
+        catch
+        {
+            return defaultValue;
+        }
+    }
+
+    /// <summary>
+    /// Gets all values of an option as a specific type.
+    /// </summary>
+    public IReadOnlyList<T> GetOptionValues<T>(string name)
+    {
+        if (!_options.TryGetValue(name, out var values))
+        {
+            return Array.Empty<T>();
+        }
+
+        var result = new List<T>();
+        foreach (var value in values)
+        {
+            try
+            {
+                result.Add(ConvertValue<T>(value));
+            }
+            catch
+            {
+                // Skip invalid values
+            }
+        }
+
+        return result.AsReadOnly();
+    }
+
+    private static T ConvertValue<T>(string value)
+    {
+        var targetType = typeof(T);
+
+        // Handle nullable types
+        var underlyingType = Nullable.GetUnderlyingType(targetType);
+        if (underlyingType != null)
+        {
+            targetType = underlyingType;
+        }
+
+        // Special handling for bool
+        if (targetType == typeof(bool))
+        {
+            if (bool.TryParse(value, out var boolResult))
+            {
+                return (T)(object)boolResult;
+            }
+            // Treat presence as true, or values like "1", "yes", "on" as true
+            if (string.IsNullOrEmpty(value) || 
+                value.Equals("1", StringComparison.OrdinalIgnoreCase) ||
+                value.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
+                value.Equals("on", StringComparison.OrdinalIgnoreCase))
+            {
+                return (T)(object)true;
+            }
+            return (T)(object)false;
+        }
+
+        // Handle enums
+        if (targetType.IsEnum)
+        {
+            return (T)Enum.Parse(targetType, value, ignoreCase: true);
+        }
+
+        // Special handling for floating-point types with invariant culture
+        if (targetType == typeof(double))
+        {
+            return (T)(object)double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        if (targetType == typeof(float))
+        {
+            return (T)(object)float.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        if (targetType == typeof(decimal))
+        {
+            return (T)(object)decimal.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        // Use Convert for other primitive types
+        return (T)Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);
     }
 }

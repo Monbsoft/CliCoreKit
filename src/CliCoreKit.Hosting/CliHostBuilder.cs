@@ -22,9 +22,9 @@ public sealed class CliHostBuilder
     }
 
     /// <summary>
-    /// Registers a command.
+    /// Registers a command with fluent configuration.
     /// </summary>
-    public CliHostBuilder AddCommand<TCommand>(string name, string? description = null, string[]? aliases = null)
+    public CommandBuilder AddCommand<TCommand>(string name, string? description = null, string[]? aliases = null)
         where TCommand : class, ICommand
     {
         _services.AddTransient<TCommand>();
@@ -38,13 +38,13 @@ public sealed class CliHostBuilder
         };
 
         _registry.Register(definition);
-        return this;
+        return new CommandBuilder(_services, _registry, definition);
     }
 
     /// <summary>
     /// Registers a subcommand.
     /// </summary>
-    public CliHostBuilder AddSubCommand<TCommand>(string name, string parent, string? description = null)
+    public CommandBuilder AddSubCommand<TCommand>(string name, string parent, string? description = null)
         where TCommand : class, ICommand
     {
         _services.AddTransient<TCommand>();
@@ -58,7 +58,7 @@ public sealed class CliHostBuilder
         };
 
         _registry.Register(definition);
-        return this;
+        return new CommandBuilder(_services, _registry, definition);
     }
 
     /// <summary>

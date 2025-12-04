@@ -31,6 +31,11 @@ public sealed class CommandDefinition
     public required Type CommandType { get; init; }
 
     /// <summary>
+    /// Gets or sets argument definitions for this command (positional parameters).
+    /// </summary>
+    public List<ArgumentDefinition> Arguments { get; init; } = new();
+
+    /// <summary>
     /// Gets or sets option definitions for this command.
     /// </summary>
     public List<OptionDefinition> Options { get; init; } = new();
@@ -39,6 +44,13 @@ public sealed class CommandDefinition
     /// Gets or sets whether this command is hidden from help.
     /// </summary>
     public bool IsHidden { get; init; }
+
+    /// <summary>
+    /// Gets or sets whether to disable help generation for this command.
+    /// When false (default), the system automatically handles --help/-h.
+    /// When true, the command must handle help itself.
+    /// </summary>
+    public bool DisableHelp { get; set; }
 
     /// <summary>
     /// Checks if this command matches a given name.
@@ -69,6 +81,11 @@ public sealed class OptionDefinition
     /// Gets or sets the option description.
     /// </summary>
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets or sets whether this option requires a value.
+    /// </summary>
+    public bool HasValue { get; init; } = true;
 
     /// <summary>
     /// Gets or sets whether this option is required.
