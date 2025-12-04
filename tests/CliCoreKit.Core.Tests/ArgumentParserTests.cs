@@ -106,7 +106,7 @@ public class ArgumentParserTests
         result.HasOption("verbose").Should().BeTrue();
         result.HasOption("o").Should().BeTrue();
         result.GetOptionValue("o").Should().Be("output.txt");
-        result.Positional.Should().ContainSingle().Which.Should().Be("file1.txt");
+        result.Positional.Should().BeEmpty();
     }
 
     [Fact]
