@@ -87,7 +87,15 @@ public sealed class ArgumentParser
             return index + 1;
         }
 
-        // Long options without = are treated as flags (no value from next argument)
+        // Long option without =
+        // Check if next arg is a value (not another option)
+        if (index + 1 < args.Length && !IsOption(args[index + 1]))
+        {
+            result.AddOption(option, args[index + 1]);
+            return index + 2;
+        }
+
+        // Flag option (no value)
         result.AddOption(option);
         return index + 1;
     }

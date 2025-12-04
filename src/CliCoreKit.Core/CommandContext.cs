@@ -110,7 +110,11 @@ public sealed class CommandContext
             {
                 try
                 {
-                    return (T)Convert.ChangeType(optDef.DefaultValue, typeof(T));
+                    var targetType = typeof(T);
+                    var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+                    
+                    var convertedValue = Convert.ChangeType(optDef.DefaultValue, underlyingType);
+                    return (T)convertedValue;
                 }
                 catch
                 {

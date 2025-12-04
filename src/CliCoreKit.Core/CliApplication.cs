@@ -55,6 +55,29 @@ public sealed class CliApplication
                 parsedArgs.AddNamedArgument(orderedArgs[i].Name, parsedArgs.Positional[i]);
             }
 
+            // Map short option names to long names
+            foreach (var option in route.CommandDefinition.Options)
+            {
+                if (option.ShortName.HasValue)
+                {
+                    // If the short name was used (e.g., -g), map it to the long name (e.g., greeting)
+                    if (parsedArgs.HasOption(option.ShortName.ToString()!))
+                    {
+                        var values = parsedArgs.GetOptionValues(option.ShortName.ToString()!);
+                        foreach (var value in values)
+                        {
+                            parsedArgs.AddOption(option.Name, value);
+                        }
+                        
+                        // If it's a flag (no value), also add it with the long name
+                        if (values.Count == 0)
+                        {
+                            parsedArgs.AddOption(option.Name);
+                        }
+                    }
+                }
+            }
+
             // Check if help is requested
             var helpRequested = parsedArgs.HasOption("help") || parsedArgs.HasOption("h");
             
