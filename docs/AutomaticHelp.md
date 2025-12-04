@@ -155,7 +155,7 @@ If you need custom help handling, disable auto-help:
 
 ```csharp
 cli.AddCommand<CustomCommand>("custom", "Command with fancy help")
-.WithoutHelp();  // ← Disable automatic help
+   .WithoutAutoHelp();  // ← Disable automatic help
 
 public class CustomCommand : ICommand
 {
@@ -217,7 +217,7 @@ cli.AddCommand<ProcessCommand>("process", "Process data files")
 
 ### ❌ DON'T
 
-- **Don't handle --help manually** (unless you use `WithoutHelp()`)
+- **Don't handle --help manually** (unless you use `WithoutAutoHelp()`)
 - **Don't forget descriptions** (help becomes less useful)
 - **Don't use generic descriptions** like "An option"
 
@@ -286,7 +286,7 @@ public Task<int> ExecuteAsync(CommandContext context, CancellationToken ct)
 - ✅ Help is generated from **Arguments** and **Options** metadata
 - ✅ Shows **types**, **defaults**, **required** indicators
 - ✅ Works for **hierarchical** commands
-- ✅ Can opt-out with **`WithoutHelp()`**
+- ✅ Can opt-out with **`WithoutAutoHelp()`**
 - ✅ **Cleaner code** - no manual help handling
 
 The automatic help system makes your CLI more consistent, maintainable, and user-friendly! 🚀

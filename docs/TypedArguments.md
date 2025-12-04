@@ -235,4 +235,6 @@ var port = context.Arguments.GetOption<int>("port", 8080);
 
 ## See Also
 
-- [Full Sample Application](../samples/CliCoreKit.Sample/Program.cs)
+- [Full Sample Application](../samples/CliCoreKit.Sample/Program_WithGenerics.cs)
+- [API Reference](API.md)
+- [Migration Guide](MIGRATION.md)
