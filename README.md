@@ -47,7 +47,7 @@ public class GreetCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        var name = context.Arguments.GetOptionValue("name") ?? "World";
+        var name = context.GetOptionValue("name") ?? "World";
         Console.WriteLine($"Hello, {name}!");
         return Task.FromResult(0);
     }
@@ -221,23 +221,23 @@ Access parsed arguments in your commands:
 public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
 {
     // Check if option exists
-    bool verbose = context.Arguments.HasOption("verbose") || context.Arguments.HasOption("v");
+    bool verbose = context.HasOption("verbose") || context.HasOption("v");
 
     // Get option value
-    string? output = context.Arguments.GetOptionValue("output");
+    string? output = context.GetOptionValue("output");
 
     // Get typed value
-    if (context.Arguments.TryGetValue<int>("port", out var port))
+    if (context.TryGetOption<int>("port", out var port))
     {
         Console.WriteLine($"Using port: {port}");
     }
 
     // Get positional arguments
-    var file1 = context.Arguments.GetPositional(0);
-    var file2 = context.Arguments.GetPositional(1);
+    var file1 = context.GetPositional(0);
+    var file2 = context.GetPositional(1);
 
     // Get all positional arguments
-    foreach (var file in context.Arguments.Positional)
+    foreach (var file in context.Positional)
     {
         Console.WriteLine($"Processing: {file}");
     }

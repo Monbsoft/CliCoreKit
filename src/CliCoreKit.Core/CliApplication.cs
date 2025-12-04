@@ -48,6 +48,13 @@ public sealed class CliApplication
 
             var parsedArgs = _router.ParseArguments(route.RemainingArgs);
 
+            // Map positional arguments to their names based on command definition
+            var orderedArgs = route.CommandDefinition.Arguments.OrderBy(a => a.Position).ToList();
+            for (int i = 0; i < Math.Min(orderedArgs.Count, parsedArgs.Positional.Count); i++)
+            {
+                parsedArgs.AddNamedArgument(orderedArgs[i].Name, parsedArgs.Positional[i]);
+            }
+
             // Check if help is requested
             var helpRequested = parsedArgs.HasOption("help") || parsedArgs.HasOption("h");
             
@@ -58,12 +65,12 @@ public sealed class CliApplication
                 return 0;
             }
 
-            var context = new CommandContext
-            {
-                Arguments = parsedArgs,
-                RawArgs = args,
-                CommandName = string.Join(" ", route.CommandPath)
-            };
+            var context = new CommandContext(
+                parsedArgs,
+                args,
+                string.Join(" ", route.CommandPath),
+                route.CommandDefinition
+            );
 
             // Add command definition to context for middleware
             context.Data["CommandDefinition"] = route.CommandDefinition;
