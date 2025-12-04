@@ -24,11 +24,11 @@ public class GreetCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        // Type-safe access with IntelliSense support
-        var name = context.Arguments.GetArgument<string>(0, "World");
-        var greeting = context.Arguments.GetOption<string>("greeting", "Hello");
-        var formal = context.Arguments.GetOption<bool>("formal");
-        var repeat = context.Arguments.GetOption<int>("repeat", 1);
+        // Direct access from context - clean and simple!
+        var name = context.GetArgument<string>("name", "World");
+        var greeting = context.GetOption<string>("greeting", "Hello");
+        var formal = context.GetOption<bool>("formal");
+        var repeat = context.GetOption<int>("repeat", 1);
 
         var message = formal ? $"Good day, {name}!" : $"{greeting}, {name}!";
         
@@ -73,12 +73,12 @@ app build --watch --output ./dist
 
 ```csharp
 // Get with default value
-var port = context.Arguments.GetOption<int>("port", 8080);
-var name = context.Arguments.GetOption<string>("name", "default");
-var verbose = context.Arguments.GetOption<bool>("verbose"); // defaults to false
+var port = context.GetOption<int>("port", 8080);
+var name = context.GetOption<string>("name", "default");
+var verbose = context.GetOption<bool>("verbose"); // defaults to false
 
 // Try get with error handling
-if (context.Arguments.TryGetValue<int>("port", out var port))
+if (context.TryGetOption<int>("port", out var port))
 {
     Console.WriteLine($"Using port: {port}");
 }
@@ -91,12 +91,15 @@ else
 ### Getting Arguments (Positional)
 
 ```csharp
-// Get typed positional argument
-var count = context.Arguments.GetArgument<int>(0);
-var name = context.Arguments.GetArgument<string>(1, "default");
+// Get named argument - safer than positional access
+var environment = context.GetArgument<string>("environment");
+var version = context.GetArgument<string>("version", "latest");
+
+// Still available: Get by position (but not recommended)
+var firstArg = context.GetArgument<int>(0);
 
 // With null safety
-var value = context.Arguments.GetArgument<double?>(0);
+var value = context.GetArgument<double?>("temperature");
 if (value.HasValue)
 {
     Console.WriteLine($"Value: {value.Value}");
@@ -111,7 +114,7 @@ cli.AddCommand<ProcessCommand>("process")
    .AddOption<string>("file", 'f', "Files to process");
 
 // Get all values
-var files = context.Arguments.GetOptionValues<string>("file");
+var files = context.GetOptionValues<string>("file");
 foreach (var file in files)
 {
     Console.WriteLine($"Processing: {file}");
@@ -137,9 +140,10 @@ public class ConvertCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        var value = context.Arguments.GetArgument<double>(0);
-        var from = context.Arguments.GetOption<string>("from")!.ToUpper();
-        var to = context.Arguments.GetOption<string>("to")!.ToUpper();
+        // Access arguments by name - clear and safe!
+        var value = context.GetArgument<double>("value");
+        var from = context.GetOption<string>("from")!.ToUpper();
+        var to = context.GetOption<string>("to")!.ToUpper();
 
         // Conversion logic...
         Console.WriteLine($"{value}°{from} = {result:F2}°{to}");
@@ -169,9 +173,10 @@ public class CalcCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        var a = context.Arguments.GetArgument<double>(0);
-        var b = context.Arguments.GetArgument<double>(1);
-        var op = context.Arguments.GetOption<string>("operation", "+");
+        // Named arguments make code self-documenting
+        var a = context.GetArgument<double>("a");
+        var b = context.GetArgument<double>("b");
+        var op = context.GetOption<string>("operation", "+");
 
         var result = op switch
         {
@@ -211,8 +216,8 @@ Options:
 
 **Before:**
 ```csharp
-var name = context.Arguments.GetOptionValue("name") ?? "default";
-if (int.TryParse(context.Arguments.GetOptionValue("port"), out var port))
+var name = context.GetOptionValue("name") ?? "default";
+if (int.TryParse(context.GetOptionValue("port"), out var port))
 {
     // use port
 }
@@ -220,8 +225,8 @@ if (int.TryParse(context.Arguments.GetOptionValue("port"), out var port))
 
 **After:**
 ```csharp
-var name = context.Arguments.GetOption<string>("name", "default");
-var port = context.Arguments.GetOption<int>("port", 8080);
+var name = context.GetOption<string>("name", "default");
+var port = context.GetOption<int>("port", 8080);
 ```
 
 ## Benefits

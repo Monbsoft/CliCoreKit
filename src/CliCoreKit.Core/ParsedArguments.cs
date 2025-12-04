@@ -7,6 +7,7 @@ public sealed class ParsedArguments
 {
     private readonly Dictionary<string, List<string>> _options = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<string> _positional = new();
+    private readonly Dictionary<string, string> _namedArguments = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Gets all positional arguments (non-option arguments).
@@ -43,6 +44,14 @@ public sealed class ParsedArguments
     }
 
     /// <summary>
+    /// Adds a named argument directly (no position mapping needed).
+    /// </summary>
+    public void AddNamedArgument(string name, string value)
+    {
+        _namedArguments[name] = value;
+    }
+
+    /// <summary>
     /// Checks if an option is present.
     /// </summary>
     public bool HasOption(string name) => _options.ContainsKey(name);
@@ -73,6 +82,14 @@ public sealed class ParsedArguments
     public string? GetPositional(int index)
     {
         return index >= 0 && index < _positional.Count ? _positional[index] : null;
+    }
+
+    /// <summary>
+    /// Gets a named argument value.
+    /// </summary>
+    internal string? GetNamedArgument(string name)
+    {
+        return _namedArguments.TryGetValue(name, out var value) ? value : null;
     }
 
     /// <summary>
@@ -135,15 +152,15 @@ public sealed class ParsedArguments
     }
 
     /// <summary>
-    /// Gets a positional argument as a specific type.
+    /// Gets a positional argument as a specific type (internal use only).
     /// </summary>
-    public T? GetArgument<T>(int index, T? defaultValue = default)
+    internal T? GetArgument<T>(int index)
     {
         var stringValue = GetPositional(index);
         
         if (stringValue == null)
         {
-            return defaultValue;
+            return default(T);
         }
 
         try
@@ -152,7 +169,29 @@ public sealed class ParsedArguments
         }
         catch
         {
-            return defaultValue;
+            return default(T);
+        }
+    }
+
+    /// <summary>
+    /// Gets a named argument as a specific type.
+    /// </summary>
+    internal T? GetNamedArgument<T>(string name)
+    {
+        var stringValue = GetNamedArgument(name);
+        
+        if (stringValue == null)
+        {
+            return default(T);
+        }
+
+        try
+        {
+            return ConvertValue<T>(stringValue);
+        }
+        catch
+        {
+            return default(T);
         }
     }
 
@@ -182,7 +221,7 @@ public sealed class ParsedArguments
         return result.AsReadOnly();
     }
 
-    private static T ConvertValue<T>(string value)
+    internal static T ConvertValue<T>(string value)
     {
         var targetType = typeof(T);
 

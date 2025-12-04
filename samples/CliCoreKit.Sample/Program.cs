@@ -49,14 +49,16 @@ public class GreetCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        var name = context.Arguments.GetArgument<string>(0, "World");
-        var greeting = context.Arguments.GetOption<string>("greeting", "Hello");
-        var formal = context.Arguments.GetOption<bool>("formal");
-        var repeat = context.Arguments.GetOption<int>("repeat", 1);
+        // Clean API - default values come from definition!
+        var name = context.GetArgument<string>("name");
+        var greeting = context.GetOption<string>("greeting");
+        var formal = context.GetOption<bool>("formal");
+        var repeat = context.GetOption<int?>("repeat");
 
-        var message = formal ? $"Good day, {name}!" : $"{greeting}, {name}!";
+        var message = formal == true ? $"Good day, {name}!" : $"{greeting}, {name}!";
 
-        for (int i = 0; i < repeat; i++)
+        int repeatCount = repeat ?? 1;
+        for (int i = 0; i < repeatCount; i++)
         {
             Console.WriteLine(message);
         }
@@ -69,11 +71,12 @@ public class AddCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        var a = context.Arguments.GetArgument<int>(0);
-        var b = context.Arguments.GetArgument<int>(1);
-        var verbose = context.Arguments.GetOption<bool>("verbose");
+        // Access by name - more readable and less error-prone
+        var a = context.GetArgument<int>("number1");
+        var b = context.GetArgument<int>("number2");
+        var verbose = context.GetOption<bool>("verbose");
 
-        if (a == 0 && b == 0 && context.Arguments.Positional.Count < 2)
+        if (a == 0 && b == 0 && context.Positional.Count < 2)
         {
             Console.Error.WriteLine("Error: Two numbers are required.");
             Console.Error.WriteLine("Use 'add --help' for usage information.");
@@ -100,10 +103,10 @@ public class ListFilesCommand : ICommand
 {
     public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
     {
-        var path = context.Arguments.GetOption<string>("path", ".")!;
-        var pattern = context.Arguments.GetOption<string>("pattern", "*.*")!;
-        var invert = context.Arguments.GetOption<bool>("invert");
-        var recursive = context.Arguments.GetOption<bool>("recursive");
+        var path = context.GetOption<string>("path") ?? ".";
+        var pattern = context.GetOption<string>("pattern") ?? "*.*";
+        var invert = context.GetOption<bool>("invert");
+        var recursive = context.GetOption<bool>("recursive");
 
         try
         {

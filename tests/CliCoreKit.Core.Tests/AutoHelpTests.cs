@@ -255,7 +255,7 @@ public class AutoHelpTests
     {
         public Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken = default)
         {
-            if (context.Arguments.HasOption("help"))
+            if (context.HasOption("help"))
             {
                 Console.WriteLine("CUSTOM HELP");
             }
