@@ -12,9 +12,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Extract version from tag
       id: version
@@ -22,22 +19,6 @@ jobs:
         TAG=${GITHUB_REF#refs/tags/v}
         echo "version=$TAG" >> $GITHUB_OUTPUT
         echo "Version extraite: $TAG"
-
-    - name: Update version in csproj files
-      run: |
-        VERSION="${{ steps.version.outputs.version }}"
-        sed -i "s|<Version>.*</Version>|<Version>$VERSION</Version>|g" src/CliCoreKit.Core/CliCoreKit.Core.csproj
-        sed -i "s|<Version>.*</Version>|<Version>$VERSION</Version>|g" src/CliCoreKit.Hosting/CliCoreKit.Hosting.csproj
-        echo "Version mise à jour: $VERSION"
-
-    - name: Commit version changes
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add src/CliCoreKit.Core/CliCoreKit.Core.csproj
-        git add src/CliCoreKit.Hosting/CliCoreKit.Hosting.csproj
-        git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
-        git push origin HEAD:dev
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -48,10 +29,10 @@ jobs:
       run: dotnet restore
 
     - name: Build project
-      run: dotnet build --configuration Release
+      run: dotnet build --configuration Release /p:Version=${{ steps.version.outputs.version }}
 
     - name: Pack NuGet package
-      run: dotnet pack --configuration Release -o ./output
+      run: dotnet pack --configuration Release -o ./output /p:Version=${{ steps.version.outputs.version }}
 
     - name: Push package to NuGet
       run: dotnet nuget push "./output/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
